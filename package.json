@@ -1,0 +1,26 @@
+{
+  "name": "truss-interview",
+  "version": "1.0.0",
+  "description": "",
+  "main": "normalizer.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dispatchrabbi/truss-interview.git"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/dispatchrabbi/truss-interview/issues"
+  },
+  "homepage": "https://github.com/dispatchrabbi/truss-interview#readme",
+  "dependencies": {
+    "csv": "^5.3.2",
+    "moment-timezone": "^0.5.28"
+  }
+}
