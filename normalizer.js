@@ -7,22 +7,27 @@ const transform = require('stream-transform');
 const stringify = require('csv-stringify');
 
 const parser = parse({ info: true });
+parser.on('error', err => console.error(err));
 
 const transformer = transform(function(data) {
+  // record is the actual row data; info is metadata about the row
   let { record, info } = data;
   if(info.records === 0) {
-    // it's the header row
+    // it's the header row; don't transform it
     return record;
-  } else {
+  }
+
+  try {
     return transformRow(record);
+  } catch(e) {
+    console.error(`Error transforming line ${info.lines}: ${e.message}`);
+    return null; // remove this row from the output
   }
 });
+transformer.on('error', err => console.error(err));
 
 const stringifier = stringify();
-
-parser.on('error', function(err) {
-  console.error(err);
-});
+stringifier.on('error', err => console.error(err));
 
 process.stdin.pipe(parser).pipe(transformer).pipe(stringifier).pipe(process.stdout);
 
@@ -37,16 +42,20 @@ const columnTransforms = [
   transformFreeInput,     // Notes
 ]
 function transformRow(rowData) {
-  return rowData.map(function(el, ix, arr) {
-    return columnTransforms[ix](el, arr);
+  // For each field in the row...
+  return rowData.map(function(fieldData, columnIndex, wholeRow) {
+    // ...use the appropriate transform function to transform it.
+    return columnTransforms[columnIndex](fieldData, wholeRow);
   });
 }
 
 function transformTimestamp(input) {
+  // convert the timezone to US Eastern Time, and output it as RFC 3339 (which is basically strict ISO 8601)
   return moment(input, 'M/D/YY h:mm:ss A', 'America/Los_Angeles').tz('America/New_York').format();
 }
 
 function transformFreeInput(input) {
+  // we don't need to do anything to the free input fields
   return input;
 }
 
@@ -61,8 +70,8 @@ function transformFullName(input) {
 }
 
 function transformDuration(input) {
-  // Durations come to us in the format HH:MM:SS.MS
-  const matches = /^(\d+):(\d{2}):([\d.]+)$/.exec(input);
+  // Durations come to us in the format H:MM:SS.MS (where H can have 1+ digits)
+  const matches = /^(\d+):(\d{2}):(\d{2}\.\d+)$/.exec(input);
   const hours = +matches[1];
   const minutes = +matches[2];
   const seconds = +matches[3];
@@ -72,7 +81,8 @@ function transformDuration(input) {
 }
 
 function transformTotalDuration(input, row) {
-  // FooDuration is column 4 and BarDuration is column 5 (0-based)
-  // we want them added together
-  return transformDuration(row[4]) + transformDuration(row[5]);
+  // FooDuration is column 4 and BarDuration is column 5 (0-based); we want to get the sum of both
+  // Floating-point addition is sometimes fraught (see https://floating-point-gui.de/),
+  // so we'll convert them to milliseconds before adding them
+  return ((transformDuration(row[4]) * 1000) + (transformDuration(row[5]) * 1000)) / 1000;
 }
