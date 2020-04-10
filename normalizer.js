@@ -24,7 +24,7 @@ parser.on('error', function(err) {
   console.error(err);
 });
 
-process.stdin.pipe(parser).pipe(transformer).pipe(stringifier).pipe(process.stdout);
+process.stdin.pipe(parser).pipe(transformer).pipe(stringifier)/*.pipe(process.stdout)*/;
 
 const columnTransforms = [
   transformTimestamp,     // Timestamp
@@ -43,7 +43,7 @@ function transformRow(rowData) {
 }
 
 function transformTimestamp(input) {
-  return moment(input, 'YY-M-D h:mm:ss A', 'America/Los_Angeles').tz('America/New_York').format();
+  return moment(input, 'M/D/YY h:mm:ss A', 'America/Los_Angeles').tz('America/New_York').format();
 }
 
 function transformFreeInput(input) {
