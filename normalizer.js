@@ -24,7 +24,7 @@ parser.on('error', function(err) {
   console.error(err);
 });
 
-process.stdin.pipe(parser).pipe(transformer).pipe(stringifier)/*.pipe(process.stdout)*/;
+process.stdin.pipe(parser).pipe(transformer).pipe(stringifier).pipe(process.stdout);
 
 const columnTransforms = [
   transformTimestamp,     // Timestamp
